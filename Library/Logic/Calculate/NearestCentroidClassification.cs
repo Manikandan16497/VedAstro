@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace VedAstro.Library
 {
-    public static class NearestCentroidClassificationTools
+    public static class NearestCentroidClassification
     {
 
         public static double[][] MatLoad(string fn,
@@ -183,51 +183,28 @@ namespace VedAstro.Library
 
         // ------------------------------------------------------
 
-        /// <summary>
-        /// Displays a matrix M with decimal precision dec, 
-        /// width wid, and shows indices if showIndices is true.
-        /// If numRows is less than the total number of rows in M, 
-        /// an ellipsis (...) is displayed at the end.
-        /// </summary>
-        /// <param name="M">The 2D array of double values to be displayed</param>
-        /// <param name="dec">The number of decimal places to display for each value</param>
-        /// <param name="wid">The minimum width of each value to be displayed</param>
-        /// <param name="numRows">The number of rows to display from the 2D array</param>
-        /// <param name="showIndices">A boolean indicating whether to display row indices</param>
-        public static void MatShow(double[][] M, int dec, int wid, int numRows, bool showIndices)
+        public static void MatShow(double[][] M, int dec,
+          int wid, int numRows, bool showIndices)
         {
-            // Calculate a small value based on the decimal places (dec)
             double small = 1.0 / Math.Pow(10, dec);
-
-            // Loop through each row of the 2D array (M)
             for (int i = 0; i < numRows; ++i)
             {
-                // If showIndices is true, print the row index with padding
                 if (showIndices == true)
                 {
                     int pad = M.Length.ToString().Length;
-                    Console.Write("[" + i.ToString().PadLeft(pad) + "]");
+                    Console.Write("[" + i.ToString().
+                      PadLeft(pad) + "]");
                 }
-
-                // Loop through each column of the current row
                 for (int j = 0; j < M[0].Length; ++j)
                 {
-                    // Get the value at the current position
                     double v = M[i][j];
-
-                    // If the absolute value of v is smaller than the small value, set it to 0
                     if (Math.Abs(v) < small) v = 0.0;
-
-                    // Print the value with the specified decimal places (dec) and width (wid)
-                    Console.Write(v.ToString("F" + dec).PadLeft(wid));
+                    Console.Write(v.ToString("F" + dec).
+                      PadLeft(wid));
                 }
-
-                // Move to the next line
                 Console.WriteLine("");
             }
-
-            // If there are more rows in the array than the specified number of rows (numRows), print an ellipsis
-            if (numRows < M.Length) Console.WriteLine("...");
+            if (numRows < M.Length) Console.WriteLine(". . .");
         }
 
         // ------------------------------------------------------

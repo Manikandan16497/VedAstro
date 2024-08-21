@@ -21,6 +21,10 @@ namespace API
 
         //PUBLIC API
 
+        /// <summary>
+        /// Called by API callers
+        /// TODO MARKED FOR OBLIVIONS REPLACED BY OPEN API
+        /// </summary>
         [Function(nameof(Match))]
         public static async Task<HttpResponseData> Match([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequestData incomingRequest)
         {
@@ -44,7 +48,7 @@ namespace API
                 var female = personList[1];
 
                 //generate compatibility report
-                var compatibilityReport = MatchCalculator.GetNewMatchReport(male, female, ownerId);
+                var compatibilityReport = MatchReportFactory.GetNewMatchReport(male, female, ownerId);
                 var reportJSON = compatibilityReport.ToJson();
                 return APITools.PassMessageJson(reportJSON, incomingRequest);
             }
@@ -72,7 +76,7 @@ namespace API
                 var visitorId = rootXml.Element("VisitorId")?.Value;
                 var userId = rootXml.Element("UserId")?.Value;
 
-                var callerId = APITools.GetCallerId(userId, visitorId);
+                var callerId = Tools.GetCallerId(userId, visitorId);
 
                 //generate compatibility report
                 var compatibilityReport = await GetNewMatchReport(maleId, femaleId, callerId); //caller id will be unique
@@ -124,7 +128,7 @@ namespace API
                 var userId = rootXml.Element("UserId")?.Value; //
                 var visitorId = rootXml.Element("VisitorId")?.Value; //id of the owner can be visitor id
 
-                var callerId = APITools.GetCallerId(userId, visitorId);
+                var callerId = Tools.GetCallerId(userId, visitorId);
 
                 //generate compatibility report
                 var compatibilityReport = await GetNewMatchReport(maleId, femaleId, callerId);
@@ -243,7 +247,7 @@ namespace API
                 var nameInput = Tools.CleanAndFormatNameText(name);
 
                 //new person ID made from thin air 
-                var brandNewHumanReadyId = await APITools.GeneratePersonId(ownerId, nameInput, birthTime.StdYear().ToString());
+                var brandNewHumanReadyId = await PersonManagerTools.GeneratePersonId(ownerId, nameInput, birthTime.StdYear().ToString());
 
                 //get gender from gender string
                 var gender = Enum.Parse<Gender>(genderText);
@@ -271,7 +275,7 @@ namespace API
             var notEmpty = !Person.Empty.Equals(male) && !Person.Empty.Equals(female);
             if (notEmpty)
             {
-                return Task.FromResult(MatchCalculator.GetNewMatchReport(male, female, userId));
+                return Task.FromResult(MatchReportFactory.GetNewMatchReport(male, female, userId));
             }
             else
             {
@@ -309,12 +313,12 @@ namespace API
                 //       & male can be checked from female position
                 if (inputPersonIsMale)
                 {
-                    report = MatchCalculator.GetNewMatchReport(inputPerson, personMatch, "101");
+                    report = MatchReportFactory.GetNewMatchReport(inputPerson, personMatch, "101");
                 }
                 //input person is female
                 else
                 {
-                    report = MatchCalculator.GetNewMatchReport(personMatch, inputPerson, "101");
+                    report = MatchReportFactory.GetNewMatchReport(personMatch, inputPerson, "101");
                 }
 
                 resultList.Add(report);

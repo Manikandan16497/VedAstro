@@ -34,7 +34,7 @@
 		<!--<PackageReference Include="VedAstro.Library" Version="1.2.0" />-->
 	</ItemGroup>
 	<ItemGroup>
-		<ProjectReference Include="..\Library\Library.csproj" />
+	  <ProjectReference Include="..\Library\Library.csproj" />
 	</ItemGroup>
 	<ItemGroup>
 		<None Update="host.json">

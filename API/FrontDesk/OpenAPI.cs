@@ -11,6 +11,7 @@ namespace API
 {
     public static class OpenAPI
     {
+
         //.../Calculate/Karana/Location/Singapore/Time/23:59/31/12/2000/+08:00
         private const string CalculateRoute = $"{nameof(Calculate)}/{{calculatorName}}/{{*fullParamString}}"; //* that captures the rest of the URL path
         private const string ListRoute = $"{nameof(ListCalls)}"; 
@@ -40,12 +41,11 @@ namespace API
                 //make caller data global to all children calling HTTP
                 CurrentCallerData.originalHttpRequest = incomingRequest;
 
+                //0 : SET LOCAL HOST : used when making same API server sub calls  "http://localhost:7071/api"
+                VedAstro.Library.Calculate.CurrentServerAddress = incomingRequest.ExtractHostAddress()+"/api";
+
                 //0 : LOG CALL : used later for throttle limit
-                ApiStatistic.LogIpAddress(incomingRequest);
-                ApiStatistic.LogRequestUrl(incomingRequest);
-                ApiStatistic.LogRawRequest(incomingRequest);
-                ApiStatistic.LogSubscriber(incomingRequest);
-                ApiStatistic.LogUserAgent(incomingRequest);
+                ApiStatistic.Log(incomingRequest); //logger
 
                 //1 : extract out custom format else empty string (removed from url)
                 var format = ParseAndGetFormat(fullParamString);
@@ -65,11 +65,11 @@ namespace API
                     case nameof(VedAstro.Library.Calculate.SouthIndianChart):
                     case nameof(VedAstro.Library.Calculate.NorthIndianChart):
                         //send direct as raw SVG image
-                        return APITools.SendFileToCaller(System.Text.Encoding.UTF8.GetBytes((string)rawProcessedData), incomingRequest, "image/svg+xml");
+                        return Tools.SendFileToCaller(System.Text.Encoding.UTF8.GetBytes((string)rawProcessedData), incomingRequest, "image/svg+xml");
                     // CSV string
                     case nameof(VedAstro.Library.Calculate.GenerateTimeListCSV):
                         //send direct as raw CSV file
-                        return APITools.SendFileToCaller(System.Text.Encoding.UTF8.GetBytes((string)rawProcessedData), incomingRequest, "text/csv");
+                        return Tools.SendFileToCaller(System.Text.Encoding.UTF8.GetBytes((string)rawProcessedData), incomingRequest, "text/csv");
                     default:
                         return APITools.SendAnyToCaller(format, calculatorName, rawProcessedData, incomingRequest);
                 }
@@ -102,10 +102,10 @@ namespace API
             var allCallKeywords = new[] { "PlanetName/All/", "PlanetName/All9WithUpagrahas/", "HouseName/All/" };
 
             // Check if any keyword is present in the fullParamString
-            var isAllCall = allCallKeywords.Any(call => fullParamString.Contains(call));
+            var isAllCall = allCallKeywords.Any(call => fullParamString?.Contains(call) ?? false); //default to false
 
             // Find the keyword that was used
-            var usedKeyword = allCallKeywords.FirstOrDefault(call => fullParamString.Contains(call));
+            var usedKeyword = allCallKeywords.FirstOrDefault(call => fullParamString?.Contains(call) ?? false); //default to false
 
             dynamic rawPlanetData;
 
@@ -273,11 +273,7 @@ namespace API
         {
             //0 : LOG CALL
             //log ip address, call time and URL,  used later for throttle limit
-            ApiStatistic.LogIpAddress(incomingRequest);
-            ApiStatistic.LogRequestUrl(incomingRequest);
-            ApiStatistic.LogRawRequest(incomingRequest);
-            ApiStatistic.LogSubscriber(incomingRequest);
-            ApiStatistic.LogUserAgent(incomingRequest);
+            ApiStatistic.Log(incomingRequest); //logger
 
             // Control API overload, even this if hit hard can COST Money via CDN
             //await APITools.AutoControlOpenAPIOverload(callLog);
@@ -295,14 +291,14 @@ namespace API
         /// takes out Ayanamsa from URL and returns remainder of URL
         /// allows /Ayanamsa/Raman to be used anywhere in URL
         /// </summary>
-        public static string ParseAndSetAyanamsa(string fullParamString)
+        public static string ParseAndSetAyanamsa(string? fullParamString)
         {
             //if url contains word "ayanamsa" than process it
-            var isCustomAyanamsa = fullParamString.Contains(nameof(Ayanamsa));
+            var isCustomAyanamsa = fullParamString?.Contains(nameof(Ayanamsa)) ?? false;  //default to false
             if (isCustomAyanamsa)
             {
                 //scan URL and take out ayanamsa and set it
-                var splitParamString = fullParamString.Split('/');
+                var splitParamString = fullParamString?.Split('/') ?? Array.Empty<string>();
                 var ayanamsaLocation = Array.IndexOf(splitParamString, nameof(Ayanamsa));
                 var ayanamsaUrl = $"/{splitParamString[ayanamsaLocation]}/{splitParamString[ayanamsaLocation + 1]}";
 
@@ -310,15 +306,15 @@ namespace API
                 VedAstro.Library.Calculate.Ayanamsa = (int)Tools.EnumFromUrl(ayanamsaUrl);
 
                 //remove ayanamsa from URL
-                fullParamString = fullParamString.Replace(ayanamsaUrl, "");
+                fullParamString = fullParamString?.Replace(ayanamsaUrl, "");
 
-                return fullParamString;
+                return fullParamString ?? "";
             }
 
             //if no ayanamsa, then return as is
             else
             {
-                return fullParamString;
+                return fullParamString ?? "";
             }
         }
 
@@ -609,6 +605,11 @@ namespace API
             else if (type == typeof(double))
             {
                 return (input) => double.Parse(input);
+            }
+            //handle double
+            else if (type == typeof(bool))
+            {
+                return (input) => bool.Parse(input.ToLower());
             }
             else
             {
